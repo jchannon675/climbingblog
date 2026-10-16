@@ -1,0 +1,14 @@
+baseURL = 'http://localhost:1313/'
+languageCode = 'en-us'
+title = 'www.jadrienhannon.com'
+theme = 'hugo-theme-cleanwhite-master'
+
+[outputFormats.JSON]
+  mediaType = "application/json"
+  baseName = "index"
+  isPlainText = true
+  notAlternative = true
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
