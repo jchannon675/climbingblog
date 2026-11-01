@@ -22,6 +22,7 @@ This last weekend my friend Juan and I spent a weekend at Camp 4 in Yosemite Val
 - [The Plan](#the-plan)
 - [Day 1: Northeast Buttress Higher Cathedral Rock | 10/24](#day-1-northeast-buttress-higher-cathedral-rock--1024)
 - [Day 2: Werner's Ant Trees, The Surprise | 10/25](#day-2-werners-ant-trees-the-surprise--1025)
+- [Photos in This Post](#photos-in-this-post)
 
 </div>
 
