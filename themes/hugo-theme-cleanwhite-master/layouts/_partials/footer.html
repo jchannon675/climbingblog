@@ -1,5 +1,8 @@
 <!-- Footer -->
 <footer>
+    <div class="site-newsletter">
+        <script async data-uid="f433bf23c7" src="https://jadrien-hannon.kit.com/f433bf23c7/index.js"></script>
+    </div>
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
@@ -481,3 +484,24 @@
 })();
 </script>
 {{ end }}
+
+
+
+
+<script>
+document.querySelectorAll('#post-toc a[href^="#"]').forEach(link => {
+    link.addEventListener('click', function (event) {
+        const href = this.getAttribute('href');
+
+        if (href && href.length > 1) {
+            event.preventDefault();
+            history.replaceState(null, '', href);
+            document.getElementById(
+                decodeURIComponent(href.slice(1))
+            )?.scrollIntoView();
+        }
+    });
+});
+</script>
+
+

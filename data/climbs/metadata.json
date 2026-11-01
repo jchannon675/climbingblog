@@ -1,0 +1,14 @@
+[
+  {
+    "name": "The Subliminal Verses",
+    "date": "9/19/2026",
+    "timeOnRoute": "~4 hr",
+    "approachTime": "3 hr",
+    "descentTime": "2 hr",
+    "gpx1": "/gpx/subliminal-verses-approach.gpx",
+    "gpx1Description": "Hamilton Dome approach.",
+    "gpx2": "/gpx/subliminal-verses-descent.gpx",
+    "gpx2Description": "Hamilton Dome descent.",
+    "tripReport": "/post/hamilton-lakes-9-19-26/"
+  }
+]

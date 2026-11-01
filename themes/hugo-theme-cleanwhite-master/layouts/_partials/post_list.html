@@ -1,43 +1,147 @@
 <!-- post list -->
 <div data-pagefind-ignore="all">
 {{ range $index, $element := $.Paginator.Pages }}
+{{ $page := . }}
 <div class="post-preview">
-    <a href="{{ .Permalink }}">
+
+    <div class="post-preview-thumbnail-stack">
+        {{ with $page.Params.image }}
+        <a class="post-preview-thumbnail" href="{{ $page.Permalink }}">
+            <img src="{{ . }}" alt="" loading="lazy">
+        </a>
+        {{ end }}
+
+        {{ range $shortcode := findRE `(?s)\{\{<\s*post-image\b.*?>\}\}` $page.RawContent }}
+            {{ $imageURL := replaceRE `(?s)^.*?\bimage="([^"]+)".*$` "$1" $shortcode }}
+            {{ if and
+                (strings.HasPrefix $imageURL "http")
+                (ne $imageURL $page.Params.image)
+            }}
+            <a class="post-preview-thumbnail" href="{{ $page.Permalink }}">
+                <img src="{{ $imageURL }}" alt="" loading="lazy">
+            </a>
+            {{ end }}
+        {{ end }}
+    </div>
+
+    <a href="{{ $page.Permalink }}">
         <h2 class="post-title">
-            {{ .Title }}
+            {{ $page.Title }}
         </h2>
-	{{with .Params.subtitle }}
+
+        {{ with $page.Params.subtitle }}
         <h3 class="post-subtitle">
             {{ . }}
         </h3>
-	{{ end }}
+        {{ end }}
+
         <div class="post-content-preview">
-	{{ with .Description }}
-            {{ . }}
-        {{ else }}
-            {{ .Summary | plainify}}
-       {{ end }}
+            {{ with $page.Description }}
+                {{ . }}
+            {{ else }}
+                {{ $page.Summary | plainify }}
+            {{ end }}
         </div>
     </a>
+
+    
     <p class="post-meta">
-    {{ if .Params.metadata }}
-        {{ range $index, $element := .Params.metadata }}
-            {{ if .link }}
-                <a href="{{ .link }}">{{ .text }}</a>
-            {{ else }}
-                {{ .text }}
+        {{ if $page.Params.metadata }}
+            {{ range $page.Params.metadata }}
+                {{ if .link }}
+                    <a href="{{ .link }}">{{ .text }}</a>
+                {{ else }}
+                    {{ .text }}
+                {{ end }}
+            {{ end }}
+        {{ else }}
+            Posted on {{ $page.Date.Format "Monday, January 2, 2006" }}
+            {{ if (and (not $page.Lastmod.IsZero) (not (eq (dateFormat "2006-01-02" $page.Lastmod) (dateFormat "2006-01-02" $page.Date)))) }}
+                <br>Last Modified on {{ dateFormat "Monday, January 2, 2006" $page.Params.LastMod }}
             {{ end }}
         {{ end }}
-    {{ else }}
-        Posted by {{ with .Params.author }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }} on {{ .Date.Format "Monday, January 2, 2006" }}
-        <!-- Don't show "Last Modified on" if update happened on the same day. -->
-        {{ if (and (not .Lastmod.IsZero) (not (eq (dateFormat "2006-01-02" .Lastmod) (dateFormat "2006-01-02" .Date)))) }}
-            <br>Last Modified on {{ dateFormat "Monday, January 2, 2006" .Params.LastMod }} 
-        {{ end }}
-    {{ end }}
+
+        <span class="post-word-count">
+            &nbsp;|&nbsp; Word Count: {{ partial "word-count.html" $page }}
+        </span>
     </p>
+
 
 </div>
 <hr>
 {{ end }}
 </div>
+
+
+
+<script>
+(function () {
+    function fitThumbnails() {
+        document.querySelectorAll('.post-preview').forEach(function (preview) {
+            const stack = preview.querySelector('.post-preview-thumbnail-stack');
+            const title = preview.querySelector('.post-title');
+            const divider = preview.nextElementSibling;
+
+            if (!stack || !title || !divider) return;
+
+            const thumbnails = Array.from(
+                stack.querySelectorAll('.post-preview-thumbnail')
+            );
+
+            if (!thumbnails.length) return;
+
+            // Show all thumbnails before measuring.
+            thumbnails.forEach(function (thumbnail) {
+                thumbnail.hidden = false;
+            });
+
+            if (window.innerWidth <= 991) return;
+
+            // Available space: top of title to the grey divider below this post.
+            const titleTop = title.getBoundingClientRect().top;
+            stack.style.top = (titleTop - preview.getBoundingClientRect().top) + 'px';
+            const dividerBottom = divider.getBoundingClientRect().bottom;
+            const availableHeight = dividerBottom - titleTop;
+
+            const first = thumbnails[0];
+            const thumbnailHeight = first.getBoundingClientRect().height;
+            const style = getComputedStyle(first);
+            const marginBottom = parseFloat(style.marginBottom) || 0;
+            const stackStyle = getComputedStyle(stack);
+            const gap = parseFloat(stackStyle.rowGap) || 0;
+
+            const itemHeight = thumbnailHeight + marginBottom + gap;
+
+            if (itemHeight <= 0 || availableHeight <= 0) return;
+
+            const count = Math.min(
+                thumbnails.length,
+                Math.max(
+                    1,
+                    Math.floor((availableHeight + gap) / itemHeight)
+                )
+            );
+
+            thumbnails.forEach(function (thumbnail, index) {
+                thumbnail.hidden = index >= count;
+            });
+        });
+    }
+
+    let resizeFrame;
+
+    function scheduleFit() {
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(fitThumbnails);
+    }
+
+    window.addEventListener('load', scheduleFit);
+    window.addEventListener('resize', scheduleFit);
+
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(scheduleFit);
+    }
+
+    scheduleFit();
+})();
+</script>

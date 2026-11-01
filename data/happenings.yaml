@@ -1,0 +1,43 @@
+- date: "October 29, 2026"
+  caption: "Cloudy night up on Gibraltar."
+  photos:
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2669.JPEG"
+      alt: "gib truck"
+
+- date: "October 28, 2026"
+  caption: "Rolling in the grass at Skofield."
+  photos:
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2666.JPEG"
+      alt: "monarch"
+
+- date: "October 27, 2026"
+  caption: "Mountain Biking with Weston at Tucker's Grove."
+  photos:
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2660.JPEG"
+      alt: "tucker mtb"
+      
+- date: "October 17, 2026"
+  caption: "Waterfall monarch at Cold Springs Trail."
+  photos:
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2529.JPEG"
+      alt: "monarch"
+
+- date: "October 16, 2026"
+  caption: "Doggies enjoying the morning sun together."
+  photos:
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2520.JPEG"
+      alt: "doggies"
+
+- date: "October 11, 2026"
+  caption: "At Jiv's dad's concert in Solvang."
+  photos:
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2516.JPEG"
+      alt: "jiv chair"
+
+- date: "October 10, 2026"
+  caption: "Another crazy sunset from the balcony."
+  photos:
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2512.JPEG"
+      alt: "sunset 1"
+    - url: "https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/happenings/IMG_2515.JPEG"
+      alt: "sunset 2"

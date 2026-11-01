@@ -7,6 +7,9 @@
     col-xs-12
     sidebar-container
 ">
+
+    {{ partial "recent-happenings.html" . }}
+
     <!-- Short About -->
 	{{ if .Site.Params.about_me }}
     <section class="visible-md visible-lg">

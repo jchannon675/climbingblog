@@ -1,0 +1,160 @@
+
+
+{{ with .Site.Data.happenings }}
+<section class="recent-happenings">
+    <hr>
+    <h5>RECENT HAPPENINGS</h5>
+
+    {{ range first 3 . }}
+    <article class="happening-item">
+        <time>{{ .date }}</time>
+        <p class="happening-caption">{{ .caption }}</p>
+
+        <div class="happening-photos">
+            {{ range .photos }}
+            <div class="happening-photo-item">
+                <button
+                    type="button"
+                    class="happening-photo"
+                    data-full-image="{{ .url }}"
+                    aria-label="View photo full screen">
+                    <img src="{{ .url }}" alt="{{ .alt }}" loading="lazy">
+                </button>
+            </div>
+            {{ end }}
+        </div>
+    </article>
+    {{ end }}
+
+    <button type="button"
+            class="all-happenings-link"
+            id="open-all-happenings">
+        All happenings &rarr;
+    </button>
+</section>
+
+<!-- All happenings overlay -->
+<div id="all-happenings-overlay"
+     class="all-happenings-overlay"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="all-happenings-title"
+     hidden>
+
+    <div class="all-happenings-panel">
+        <header class="all-happenings-header">
+            <h3 id="all-happenings-title">All Happenings</h3>
+            <button type="button"
+                    class="all-happenings-close"
+                    aria-label="Close all happenings">&times;</button>
+        </header>
+
+        <div class="all-happenings-content">
+            {{ range . }}
+            <article class="happening-item">
+                <time>{{ .date }}</time>
+                <p class="happening-caption">{{ .caption }}</p>
+
+                <div class="happening-photos">
+                    {{ range .photos }}
+                    <button
+                        type="button"
+                        class="happening-photo"
+                        data-full-image="{{ .url }}"
+                        aria-label="View photo full screen">
+                        <img src="{{ .url }}" alt="{{ .alt }}" loading="lazy">
+                    </button>
+                    {{ end }}
+                </div>
+            </article>
+            {{ end }}
+        </div>
+    </div>
+</div>
+
+<!-- Existing photo lightbox -->
+<div id="happenings-lightbox"
+     class="happenings-lightbox"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Full-screen photo viewer"
+     hidden>
+    <button type="button"
+            class="happenings-lightbox-close"
+            aria-label="Close photo viewer">&times;</button>
+    <img id="happenings-lightbox-image" src="" alt="">
+</div>
+
+<script>
+(function () {
+    const overlay = document.getElementById('all-happenings-overlay');
+    const openButton = document.getElementById('open-all-happenings');
+    const closeButton = overlay?.querySelector('.all-happenings-close');
+
+    const viewer = document.getElementById('happenings-lightbox');
+    if (!viewer || viewer.dataset.initialized) return;
+    viewer.dataset.initialized = 'true';
+
+    const viewerImage = document.getElementById('happenings-lightbox-image');
+    const viewerClose = viewer.querySelector('.happenings-lightbox-close');
+
+    let previousFocus = null;
+
+    function openAllHappenings() {
+        previousFocus = document.activeElement;
+        overlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        closeButton.focus();
+    }
+
+    function closeAllHappenings() {
+        overlay.hidden = true;
+        document.body.style.overflow = viewer.hidden ? '' : 'hidden';
+
+        if (previousFocus) previousFocus.focus();
+    }
+
+    openButton.addEventListener('click', openAllHappenings);
+    closeButton.addEventListener('click', closeAllHappenings);
+
+    overlay.addEventListener('click', function (event) {
+        if (event.target === overlay) closeAllHappenings();
+    });
+
+    function closeViewer() {
+        viewer.hidden = true;
+        viewerImage.src = '';
+        document.body.style.overflow = overlay.hidden ? '' : 'hidden';
+    }
+
+    // Attach to photos in both the sidebar and the full list.
+    document.querySelectorAll('.happening-photo').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const thumbnail = button.querySelector('img');
+
+            viewerImage.src = button.dataset.fullImage;
+            viewerImage.alt = thumbnail ? thumbnail.alt : '';
+            viewer.hidden = false;
+            document.body.style.overflow = 'hidden';
+            viewerClose.focus();
+        });
+    });
+
+    viewerClose.addEventListener('click', closeViewer);
+
+    viewer.addEventListener('click', function (event) {
+        if (event.target === viewer) closeViewer();
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+
+        if (!viewer.hidden) {
+            closeViewer();
+        } else if (!overlay.hidden) {
+            closeAllHappenings();
+        }
+    });
+})();
+</script>
+{{ end }}

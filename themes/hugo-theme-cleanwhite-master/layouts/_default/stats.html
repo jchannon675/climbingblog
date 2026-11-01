@@ -1,0 +1,1052 @@
+{{ define "header" }}
+<style>
+    header.intro-header {
+        background-image: url('https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/stats/IMG_0900.JPEG');
+    }
+</style>
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>{{ .Title }}</h1>
+                    <h2 class="subheading">A collection of climbing statistics</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+{{ end }}
+
+{{ define "main" }}
+{{ $csv := resources.Get "ticks.csv" }}
+{{ $climbs := slice }}
+{{ $metadata := site.Data.climbs.metadata | default slice }}
+{{ with $csv }}
+    {{ $climbs = transform.Unmarshal (dict "targetType" "map") . }}
+{{ end }}
+
+<article class="climbing-log-page">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9 col-md-9 post-container">
+
+                <h2>All Routes</h2>
+                <p>A complete list of my mountain project ticks.</p>
+
+                {{ if not $csv }}
+                    <p>Couldn't find <code>assets/ticks.csv</code>. Copy your existing CSV there and refresh.</p>
+                {{ else }}
+                    <p class="climb-count">
+                        <strong>{{ len $climbs }}</strong> routes climbed
+                        <span>· Select a climb to view more details</span>
+                    </p>
+
+                    <div class="climb-sort-controls">
+                        <label for="climb-sort-by">Sort by:</label>
+                        <select id="climb-sort-by">
+                            <option value="date">Date</option>
+                            <option value="grade">Grade</option>
+                            <option value="pitches">Pitches</option>
+                        </select>
+
+                        <label for="climb-sort-order">Order:</label>
+                        <select id="climb-sort-order">
+                            <option value="desc">Descending</option>
+                            <option value="asc">Ascending</option>
+                        </select>
+                    </div>
+                    <div class="climb-list-box" tabindex="0"
+                         aria-label="Scrollable list of climbing routes">
+                        <table class="climb-list-table">
+                            <thead>
+                                <tr>
+                                    <th>Route</th>
+                                    <th>Grade</th>
+                                    <th>Date</th>
+                                    <th>Pitches</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="climb-list-body"></tbody>
+                        </table>
+                    </div>
+
+                    <section id="climbing-stats" class="climbing-stats">
+                    <h2>Climbing Stats</h2>
+
+                    <div class="stats-summary">
+                        <div class="stats-card">
+                            <span class="stats-label">Total Routes</span>
+                            <strong id="stat-total-routes">—</strong>
+                            <span class="stats-sub">Routes this year</span>
+                            <strong id="stat-year-routes" class="stats-secondary">—</strong>
+                        </div>
+
+                        <div class="stats-card">
+                            <span class="stats-label">Total Pitches</span>
+                            <strong id="stat-total-pitches">—</strong>
+                            <span class="stats-sub">Pitches this year</span>
+                            <strong id="stat-year-pitches" class="stats-secondary">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="stats-chart-card stats-volume-card">
+                        <h3>Climbing Volume Over Time</h3>
+                        <p>Monthly routes and pitches across all recorded years.</p>
+                        <div class="stats-chart-container stats-chart-wide">
+                            <canvas id="volume-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="stats-chart-grid">
+                        <div class="stats-chart-card">
+                            <h3>Grade Distribution</h3>
+                            <p>All-time climbs by grade.</p>
+                            <div class="stats-chart-container">
+                                <canvas id="grade-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="stats-chart-card">
+                            <h3>Route Types</h3>
+                            <p>All-time climbs by type.</p>
+                            <div class="stats-chart-container">
+                                <canvas id="type-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                    <script id="climbing-data" type="application/json">
+                        {{ $climbs | jsonify | safeJS }}
+                    </script>
+
+                    <script id="climbing-metadata" type="application/json">
+                        {{ $metadata | jsonify | safeJS }}
+                    </script>
+
+                    <div id="climb-modal" class="climb-modal"
+                         role="dialog" aria-modal="true"
+                         aria-labelledby="climb-modal-title" hidden>
+                        <div class="climb-modal-backdrop" data-close-modal></div>
+
+                        <div class="climb-modal-panel">
+                            <button type="button" class="climb-modal-close"
+                                    aria-label="Close details" data-close-modal>
+                                &times;
+                            </button>
+
+                            <h2 id="climb-modal-title">Climb details</h2>
+
+                            <h3>Route information</h3>
+                            <dl id="climb-modal-details" class="climb-detail-grid"></dl>
+
+                            <div id="climb-additional-section" hidden>
+                                <h3>Additional details</h3>
+                                <dl class="climb-detail-grid" id="climb-additional-details"></dl>
+                            </div>
+                        </div>
+                    </div>
+                {{ end }}
+
+            </div>
+            {{ partial "sidebar.html" . }}
+        </div>
+    </div>
+</article>
+
+<style>
+.climb-count {
+    margin: 20px 0 14px;
+    color: #666;
+}
+
+.climb-count span {
+    margin-left: 6px;
+}
+
+.climb-list-box {
+    height: 480px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #fff;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.climb-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    font-size: 14px;
+}
+
+.climb-list-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f2f2f2;
+}
+
+.climb-list-table th {
+    padding: 13px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 2px solid #ddd;
+}
+
+.climb-list-table td {
+    padding: 11px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.climb-list-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.climb-list-table tbody tr:hover,
+.climb-list-table tbody tr:focus {
+    background: #f0f5f7;
+    outline: none;
+}
+
+.climb-list-table tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.climb-list-table tbody tr:nth-child(even):hover {
+    background-color: #f0f5f7;
+}
+
+.climb-list-hint {
+    margin-top: 8px;
+    color: #777;
+    font-size: 13px;
+}
+
+.climb-modal[hidden] {
+    display: none;
+}
+
+.climb-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.climb-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.68);
+}
+
+.climb-modal-panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 720px;
+    max-height: 85vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 30px;
+    background: #fff;
+    border-radius: 7px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.climb-modal-panel h2 {
+    margin: 0 40px 24px 0;
+}
+
+.climb-modal-panel h3 {
+    margin-top: 25px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+}
+
+.climb-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    border: 0;
+    background: transparent;
+    color: #555;
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.climb-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.8fr) minmax(0, 2fr);
+    gap: 12px 18px;
+    margin: 16px 0;
+}
+
+.climb-detail-grid dt {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.climb-detail-grid dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.climb-detail-grid a {
+    overflow-wrap: anywhere;
+}
+
+.climb-extra-note {
+    margin-top: 20px;
+    color: #777;
+    font-size: 13px;
+}
+
+body.climb-modal-open {
+    overflow: hidden;
+}
+
+@media (max-width: 600px) {
+    .climb-list-box {
+        height: 400px;
+    }
+
+    .climb-list-table {
+        min-width: 580px;
+    }
+
+    .climb-modal {
+        padding: 10px;
+    }
+
+    .climb-modal-panel {
+        padding: 22px 18px;
+        max-height: 90vh;
+    }
+
+    .climb-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+
+    .climb-detail-grid dd {
+        margin-bottom: 12px;
+    }
+}
+
+.climb-sort-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+
+.climb-sort-controls label {
+    margin: 0;
+    font-weight: 600;
+}
+
+.climb-sort-controls select {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.climbing-stats {
+    margin-top: 42px;
+    margin-bottom: 40px;
+}
+
+.climbing-stats h2 {
+    margin-bottom: 22px;
+}
+
+.stats-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.stats-card,
+.stats-chart-card {
+    padding: 22px;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    border-radius: 10px;
+    background: var(--stats-card-bg, rgba(128, 128, 128, 0.04));
+}
+
+.stats-card {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.stats-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.stats-card > strong {
+    font-size: 34px;
+    line-height: 1.2;
+}
+
+.stats-sub {
+    margin-top: 8px;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.stats-card > .stats-secondary {
+    font-size: 22px;
+}
+
+.stats-chart-card {
+    min-width: 0;
+    margin-bottom: 20px;
+}
+
+.stats-chart-card h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+}
+
+.stats-chart-card p {
+    margin-bottom: 18px;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.stats-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.stats-chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.stats-chart-wide {
+    height: 350px;
+}
+
+@media (max-width: 700px) {
+    .stats-summary,
+    .stats-chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-card,
+    .stats-chart-card {
+        padding: 16px;
+    }
+
+    .stats-chart-container {
+        height: 260px;
+    }
+
+    .stats-chart-wide {
+        height: 300px;
+    }
+}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+(function () {
+    const dataElement = document.getElementById('climbing-data');
+    const tableBody = document.getElementById('climb-list-body');
+    const modal = document.getElementById('climb-modal');
+
+    if (!dataElement || !tableBody || !modal) return;
+
+    let climbs;
+
+    let climbMetadata = [];
+
+    try {
+        climbMetadata = JSON.parse(
+            document.getElementById('climbing-metadata').textContent
+        );
+    } catch (error) {
+        console.error('Could not parse climb metadata:', error);
+    }
+
+    try {
+        climbs = JSON.parse(dataElement.textContent);
+    } catch (error) {
+        tableBody.innerHTML =
+            '<tr><td colspan="5">Unable to read climbing data.</td></tr>';
+        console.error('Could not parse climbing CSV data:', error);
+        return;
+    }
+
+    function getValue(climb, desiredName) {
+        const key = Object.keys(climb).find(
+            name => name.trim().toLowerCase() === desiredName.toLowerCase()
+        );
+        return key === undefined ? '' : String(climb[key] ?? '').trim();
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[character]);
+    }
+
+    function makeCell(value) {
+        const cell = document.createElement('td');
+        cell.textContent = value || '—';
+        return cell;
+    }
+
+    function addClimbRow(climb, index) {
+        const row = document.createElement('tr');
+        row.tabIndex = 0;
+        row.setAttribute('role', 'button');
+        row.setAttribute('aria-label',
+            'View ' + (getValue(climb, 'Route') || 'climb details'));
+
+        row.append(
+            makeCell(getValue(climb, 'Route')),
+            makeCell(getValue(climb, 'Rating')),
+            makeCell(getValue(climb, 'Date')),
+            makeCell(getValue(climb, 'Pitches')),
+            makeCell(getValue(climb, 'Style'))
+        );
+
+        row.addEventListener('click', () => openClimb(climb));
+        row.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openClimb(climb);
+            }
+        });
+
+        tableBody.appendChild(row);
+    }
+
+    function openClimb(climb) {
+        const route = getValue(climb, 'Route') || 'Climb details';
+        const grade = getValue(climb, 'Rating');
+
+        document.getElementById('climb-modal-title').textContent =
+            grade ? route + ' — ' + grade : route;
+
+        const details = document.getElementById('climb-modal-details');
+        details.replaceChildren();
+
+        // Show only fields that have meaningful values, in the specified order.
+        const displayOrder = [
+            'Date',
+            'Route',
+            'Avg Stars',
+            'Route Type',
+            'Length',
+            'Pitches',
+            'Rating',
+            'Style',
+            'Lead Style',
+            'Location',
+            'Notes',
+            'URL'
+        ];
+
+        displayOrder.forEach(key => {
+            let value = climb[key] ?? '';
+
+            const field = key.trim().toLowerCase();
+            const text = String(value).trim();
+
+            // Hide empty fields, including fields containing only whitespace.
+            if (!text) return;
+
+            // Hide the rating-code field.
+            if (field === 'rating code') return;
+
+            // Hide any stars/rating field whose value is -1.
+            if (/(star|rating)/i.test(field) && text === '-1') return;
+
+            // Add feet to the length value.
+            if (field === 'length') {
+                value = text + ' ft';
+            }
+
+            const displayText = String(value).trim();
+
+            const term = document.createElement('dt');
+            term.textContent = key;
+
+            const description = document.createElement('dd');
+
+            // Make the CSV URL clickable.
+            if (field === 'url' && /^https?:\/\/\S+$/i.test(displayText)) {
+                const link = document.createElement('a');
+                link.href = displayText;
+                link.textContent = 'Mountain Project';
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                description.appendChild(link);
+            } else {
+                description.textContent = displayText;
+            }
+
+            details.append(term, description);
+        });
+
+        const routeName = getValue(climb, 'Route');
+        const climbDate = getValue(climb, 'Date');
+
+        function normalizeDate(value) {
+        const text = String(value ?? '').trim();
+
+        // Convert M/D/YYYY or MM/DD/YYYY to YYYY-MM-DD.
+        const usDate = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+        if (usDate) {
+            return `${usDate[3]}-${usDate[1].padStart(2, '0')}-${usDate[2].padStart(2, '0')}`;
+        }
+
+        return text;
+    }
+
+    const metadata = climbMetadata.find(item =>
+        String(item.name ?? '').trim().toLowerCase() === routeName.trim().toLowerCase() &&
+        normalizeDate(item.date) === normalizeDate(climbDate)
+    );
+
+    console.log('Climb metadata lookup:', {
+        routeName,
+        climbDate,
+        metadataFound: Boolean(metadata),
+        metadata
+    });
+
+        const additionalSection =
+            document.getElementById('climb-additional-section');
+        const additionalDetails =
+            document.getElementById('climb-additional-details');
+
+        additionalDetails.replaceChildren();
+
+        if (metadata) {
+            const fields = [
+                ['Trip report', metadata.tripReport, true],
+                ['Time on route', metadata.timeOnRoute, false],
+                ['Approach time', metadata.approachTime, false],
+                ['Descent time', metadata.descentTime, false],
+                ['Description', metadata.description, false],
+                ['GPX track 1', metadata.gpx1, true],
+                ['GPX description 1', metadata.gpx1Description, false],
+                ['GPX track 2', metadata.gpx2, true],
+                ['GPX description 2', metadata.gpx2Description, false]
+            ];
+
+            fields.forEach(([label, value, isLink]) => {
+                if (typeof value !== 'string' || !value.trim()) return;
+
+                // Render each GPX track with its description on the same line.
+                if (label.startsWith('GPX description')) {
+                    const index = label.endsWith('1') ? '1' : '2';
+                    const trackValue = metadata['gpx' + index];
+
+                    if (!trackValue || !trackValue.trim()) return;
+
+                    const group = document.createElement('div');
+                    group.style.display = 'block';
+                    group.style.marginBottom = '0.5rem';
+
+                    const title = document.createElement('strong');
+                    title.textContent = 'GPX track: ';
+
+                    const note = document.createElement('span');
+                    note.textContent = value + ' ';
+
+                    const link = document.createElement('a');
+                    link.href = trackValue;
+                    link.textContent = 'Download GPX';
+                    link.download = '';
+
+                    title.style.display = 'block';
+                    note.style.display = 'block';
+                    link.style.display = 'block';
+
+                    group.append(title, note, link);
+                    additionalDetails.appendChild(group);
+                    return;
+                }
+
+                // GPX entries are rendered above alongside their descriptions.
+                if (label.startsWith('GPX track')) return;
+
+                const term = document.createElement('dt');
+                term.textContent = label;
+
+                const description = document.createElement('dd');
+
+                if (isLink) {
+                    const link = document.createElement('a');
+                    link.href = value;
+                    link.textContent = 'Read trip report';
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    description.appendChild(link);
+                } else {
+                    description.textContent = value;
+                }
+
+                additionalDetails.append(term, description);
+            });
+        }
+
+        additionalSection.hidden = additionalDetails.children.length === 0;
+
+        modal.hidden = false;
+        document.body.classList.add('climb-modal-open');
+        modal.querySelector('.climb-modal-close').focus();
+    }
+
+    function closeModal() {
+        modal.hidden = true;
+        document.body.classList.remove('climb-modal-open');
+    }
+
+    modal.querySelectorAll('[data-close-modal]').forEach(element => {
+        element.addEventListener('click', closeModal);
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+        const sortBy = document.getElementById('climb-sort-by');
+        const sortOrder = document.getElementById('climb-sort-order');
+
+        function gradeValue(grade) {
+            // Extract the numeric climbing grade, e.g. 5.10d -> 10.4.
+            const match = String(grade).match(/5\.(\d+)([abcd])?/i);
+            if (!match) return NaN;
+
+            const number = Number(match[1]);
+            const suffix = { a: 1, b: 2, c: 3, d: 4 }[
+                (match[2] || '').toLowerCase()
+            ] || 0;
+
+            return number * 10 + suffix;
+        }
+
+        function sortClimbs() {
+            const field = sortBy.value;
+            const direction = sortOrder.value === 'asc' ? 1 : -1;
+
+            const sorted = [...climbs].sort((a, b) => {
+                let result = 0;
+
+                if (field === 'date') {
+                    result = getValue(a, 'Date').localeCompare(
+                        getValue(b, 'Date')
+                    );
+                    // Dates in YYYY-MM-DD format sort chronologically.
+                } else if (field === 'pitches') {
+                    const aValue = parseFloat(getValue(a, 'Pitches'));
+                    const bValue = parseFloat(getValue(b, 'Pitches'));
+
+                    if (!Number.isFinite(aValue)) return 1;
+                    if (!Number.isFinite(bValue)) return -1;
+                    result = aValue - bValue;
+                } else if (field === 'grade') {
+                    const aValue = gradeValue(getValue(a, 'Rating'));
+                    const bValue = gradeValue(getValue(b, 'Rating'));
+
+                    if (!Number.isFinite(aValue)) return 1;
+                    if (!Number.isFinite(bValue)) return -1;
+                    result = aValue - bValue;
+                }
+
+                return result * direction;
+            });
+
+            tableBody.replaceChildren();
+            sorted.forEach(addClimbRow);
+        }
+
+        sortBy.addEventListener('change', sortClimbs);
+        sortOrder.addEventListener('change', sortClimbs);
+
+        
+        sortClimbs();
+
+        // Populate the climbing summary and charts.
+        function buildClimbingStats() {
+            const currentYear = new Date().getFullYear();
+
+            function parseClimbDate(value) {
+                if (!value) return null;
+
+                // Supports YYYY-MM-DD and M/D/YYYY.
+                let date;
+                if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+                    date = new Date(value.slice(0, 10) + 'T12:00:00');
+                } else {
+                    const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                    if (match) {
+                        date = new Date(
+                            Number(match[3]),
+                            Number(match[1]) - 1,
+                            Number(match[2])
+                        );
+                    } else {
+                        date = new Date(value);
+                    }
+                }
+
+                return Number.isNaN(date.getTime()) ? null : date;
+            }
+
+            const datedClimbs = climbs.map(climb => ({
+                climb,
+                date: parseClimbDate(getValue(climb, 'Date'))
+            }));
+
+            const thisYear = datedClimbs.filter(
+                item => item.date && item.date.getFullYear() === currentYear
+            );
+
+            const totalPitches = climbs.reduce((sum, climb) => {
+                const pitches = Number(getValue(climb, 'Pitches'));
+                return sum + (Number.isFinite(pitches) ? pitches : 0);
+            }, 0);
+
+            const yearPitches = thisYear.reduce((sum, item) => {
+                const pitches = Number(getValue(item.climb, 'Pitches'));
+                return sum + (Number.isFinite(pitches) ? pitches : 0);
+            }, 0);
+
+            document.getElementById('stat-total-routes').textContent =
+                climbs.length;
+            document.getElementById('stat-year-routes').textContent =
+                thisYear.length;
+            document.getElementById('stat-total-pitches').textContent =
+                totalPitches;
+            document.getElementById('stat-year-pitches').textContent =
+                yearPitches;
+
+            // Keep the summary numbers working even if Chart.js fails to load.
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js did not load; summary numbers are available.');
+                return;
+            }
+
+            const monthlyRoutes = Array(12).fill(0);
+            const monthlyPitches = Array(12).fill(0);
+
+            datedClimbs.forEach(({ climb, date }) => {
+                if (!date) return;
+                const month = date.getMonth();
+                monthlyRoutes[month]++;
+
+                const pitches = Number(getValue(climb, 'Pitches'));
+                monthlyPitches[month] +=
+                    Number.isFinite(pitches) ? pitches : 0;
+            });
+
+            const gradeCounts = {};
+            const typeCounts = {};
+
+            climbs.forEach(climb => {
+                const grade = getValue(climb, 'Rating') || 'Unknown';
+
+                const rawType = (
+                    getValue(climb, 'Route Type') ||
+                    getValue(climb, 'Style') ||
+                    ''
+                ).trim();
+
+                const type = rawType.toLowerCase();
+                let category = 'Other';
+
+                // Boulder takes precedence if the type contains "boulder".
+                if (type.includes('boulder')) {
+                    category = 'Boulder';
+                } else if (type.includes('sport')) {
+                    category = 'Sport';
+                } else if (
+                    type.includes('trad') ||
+                    type.includes('snow') ||
+                    type.includes('alpine')
+                ) {
+                    category = 'Trad';
+                } else if (type.includes('tr')) {
+                    category = 'TR';
+                } else if (!type) {
+                    category = 'Unknown';
+                }
+
+                gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
+                typeCounts[category] = (typeCounts[category] || 0) + 1;
+            });
+
+            const monthLabels = [
+                'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+            ];
+
+            new Chart(document.getElementById('volume-chart'), {
+                type: 'bar',
+                data: {
+                    labels: monthLabels,
+                    datasets: [
+                        {
+                            label: 'Routes',
+                            data: monthlyRoutes,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Pitches',
+                            data: monthlyPitches,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Routes' }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'Pitches' }
+                        }
+                    }
+                }
+            });
+
+            function makeDoughnut(canvasId, counts) {
+                const labels = Object.keys(counts).sort();
+                new Chart(document.getElementById(canvasId), {
+                    type: 'doughnut',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: labels.map(label => counts[label])
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            const gradeOrder = [
+                '5.0', '5.4', '5.5', '5.6', '5.6+',
+                '5.7-', '5.7', '5.7+',
+                '5.8-', '5.8', '5.8+',
+                '5.9-', '5.9', '5.9+',
+                '5.10a/b', '5.10c/d',
+                '5.11a/b', '5.11c/d'
+            ];
+
+            function normalizeGrade(grade) {
+                const value = grade.trim().toLowerCase();
+
+                const groups = {
+                    '5.10-': '5.10a/b',
+                    '5.10a': '5.10a/b',
+                    '5.10b': '5.10a/b',
+                    '5.10a/b': '5.10a/b',
+                    '5.10+': '5.10c/d',
+                    '5.10c': '5.10c/d',
+                    '5.10d': '5.10c/d',
+                    '5.10c/d': '5.10c/d',
+                    '5.11-': '5.11a/b',
+                    '5.11a': '5.11a/b',
+                    '5.11b': '5.11a/b',
+                    '5.11a/b': '5.11a/b',
+                    '5.11+': '5.11c/d',
+                    '5.11c': '5.11c/d',
+                    '5.11d': '5.11c/d',
+                    '5.11c/d': '5.11c/d'
+                };
+
+                return groups[value] || value;
+            }
+
+            const normalizedGradeCounts = {};
+
+            Object.entries(gradeCounts).forEach(([grade, count]) => {
+                const normalized = normalizeGrade(grade);
+                normalizedGradeCounts[normalized] =
+                    (normalizedGradeCounts[normalized] || 0) + count;
+            });
+
+            const gradeLabels = gradeOrder.filter(
+                grade => normalizedGradeCounts[grade] !== undefined
+            );
+
+            new Chart(document.getElementById('grade-chart'), {
+                type: 'bar',
+                data: {
+                    labels: gradeLabels,
+                    datasets: [{
+                        label: 'Routes',
+                        data: gradeLabels.map(grade => normalizedGradeCounts[grade])
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            title: { display: true, text: 'Number of Routes' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Grade' }
+                        }
+                    }
+                }
+            });
+            makeDoughnut('type-chart', typeCounts);
+        }
+
+        buildClimbingStats();
+})();
+
+</script>
+{{ end }}

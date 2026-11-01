@@ -12,3 +12,5 @@ theme = 'hugo-theme-cleanwhite-master'
 [outputs]
   home = ["HTML", "RSS", "JSON"]
 
+[markup.goldmark.renderer]
+  unsafe = true

@@ -4,19 +4,39 @@
 {{ partial "nav.html" . }}
 <!-- Page Header -->
 {{ block "header" .}}
-<header class="intro-header" style="background-image: url('/img/home/IMG_2860.jpg')">
+{{ if eq .RelPermalink "/about/" }}
+<header class="intro-header about-header">
+    <div class="container about-banner-sizing">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="site-heading">
+                    <h1>Climbing<br>&amp; Life</h1>
+                    <span class="subheading">{{ .Site.Params.slogan }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-photo-strip">
+        <img src="https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/about-me/IMG_9604.JPEG">
+        <img src="https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/about-me/IMG_0682.JPEG">
+        <img src="https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/about-me/IMG_1593.JPEG">
+    </div>
+</header>
+{{ else }}
+<header class="intro-header" style="background-image: url('{{ with .Params.image }}{{ . }}{{ else }}https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/home/IMG_2860.jpg{{ end }}')">
     <div class="container">
         <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 ">
-                <div class="site-heading">
-                    <h1> Climbing<br> & Life </h1>
-                    <!--<hr class="small">-->
-		    <span class="subheading">{{ .Site.Params.slogan }}</span>
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="site-heading" {{ if strings.HasPrefix .RelPermalink "/post/" }}style="visibility: hidden;"{{ end }}>
+                    <h1>Climbing<br>&amp; Life</h1>
+                    <span class="subheading">{{ .Site.Params.slogan }}</span>
                 </div>
             </div>
         </div>
     </div>
 </header>
+{{ end }}
 {{ end }}
 
 {{ block "main" . }}

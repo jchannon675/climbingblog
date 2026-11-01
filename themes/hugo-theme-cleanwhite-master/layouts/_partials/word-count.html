@@ -1,0 +1,30 @@
+
+{{- $content := .RawContent -}}
+
+{{/* Remove Markdown headings */}}
+{{- $content = replaceRE `(?m)^[ \t]*\*\*?#{1,6}.*$` "" $content -}}
+
+{{/* Remove post-image shortcode blocks, including their attributes and captions */}}
+{{- $content = replaceRE `(?s)\{\{<\s*post-image\b.*?\{\{<\s*/post-image\s*>\}\}` "" $content -}}
+
+{{/* Remove remaining Hugo shortcodes */}}
+{{- $content = replaceRE `(?s)\{\{<.*?>\}\}|\{\{%.*?%\}\}` "" $content -}}
+
+{{/* Remove Markdown images */}}
+{{- $content = replaceRE `!\[[^\]]*\]\([^)]*\)` "" $content -}}
+
+{{/* Preserve link text, discard URLs */}}
+{{- $content = replaceRE `\[([^\]]+)\]\([^)]*\)` "$1" $content -}}
+
+{{/* Remove HTML tags and comments */}}
+{{- $content = replaceRE `(?s)<!--.*?-->` "" $content -}}
+{{- $content = replaceRE `<[^>]*>` "" $content -}}
+
+{{/* Remove Markdown formatting */}}
+{{- $content = replaceRE `[*_~\x60]` "" $content -}}
+
+{{/* Remove list markers */}}
+{{- $content = replaceRE `(?m)^[ \t]*[-+>]+[ \t]*` "" $content -}}
+
+{{/* Count words */}}
+{{- countwords $content -}}
