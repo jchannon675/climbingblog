@@ -181,7 +181,7 @@ Looking for the rappels.
 {{< /post-image >}}
 
 {{< post-image image="https://pub-4c7e902ff94f46fba2377f9c95feeba0.r2.dev/hamilton-lakes-9-19-26/IMG_182111.JPEG"  alt="hamilton rappels" lightbox=true >}}
-The rappels are marked in yellow on this image.
+The rappels are marked in yellow on this image, just barely visible in the upper right.
 {{< /post-image >}}
 
 From the notch the rappels had dropped us into, we had to circumnavigate the other dome dividing us from the notch we originally hiked in from. Here the bush whacking and spiky balls both again increased in intensity for a short period as we made our way down a gully and back to the tree we had stashed my bag at. My preferred method was brute force, and I cut a straight line through the bushes by jumping into pits of branches and spiky balls and unknown depths. Shortly we were back at the bag, collected our things, and began our long hike back. Once through the notch the going was fairly easy and incredibly scenic, now having the wherewithal and leisure to really take in the sights. 
