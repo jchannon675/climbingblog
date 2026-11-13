@@ -2,7 +2,7 @@
 title: "Yosemite Valley Climbing"
 subtitle: "East Buttress El Capitan and Central Pillar of Frenzy | Nov 6 - 8"
 date: 2026-11-12
-draft: true
+draft: false
 tags:
   - Climbing
   - Yosemite
